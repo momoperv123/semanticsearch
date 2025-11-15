@@ -1,0 +1,41 @@
+# Environments
+.venv/
+venv/
+env/
+*.env
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE / tooling
+.vscode/
+.idea/
+*.code-workspace
+
+# Data + model outputs
+data/processed/
+data/raw/
+data/benchmarks/
+
+# Logs
+logs/
+*.log
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Ruff
+.ruff_cache/
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Temporary
+*.tmp
+*.bak

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semantic Media Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #111827;
+      color: #fff;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .search-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #query {
+      width: 50%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .results {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: #4b5563;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      max-width: 90%;
+      max-height: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+    }
+
+    .close {
+      align-self: flex-end;
+      cursor: pointer;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Semantic Media Search</h1>
+    <p>Type a description to find matching frames</p>
+  </header>
+
+  <div class="search-container">
+    <input id="query" type="text" placeholder="e.g. cat wearing sunglasses" />
+    <button id="search-btn">Search</button>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <span class="close" id="modal-close">&times;</span>
+      <img id="modal-image" src="" alt="Preview" />
+      <div id="modal-meta"></div>
+    </div>
+  </div>
+
+  <script>
+    const searchBtn = document.getElementById("search-btn");
+    const queryInput = document.getElementById("query");
+    const resultsContainer = document.getElementById("results");
+    const modal = document.getElementById("modal");
+    const modalImage = document.getElementById("modal-image");
+    const modalMeta = document.getElementById("modal-meta");
+    const modalClose = document.getElementById("modal-close");
+
+    async function search() {
+      const query = queryInput.value.trim();
+      if (!query) {
+        alert("Please enter a search query.");
+        return;
+      }
+      resultsContainer.innerHTML = "Loading...";
+      try {
+        const response = await fetch(`/search?q=${encodeURIComponent(query)}&k=20`);
+        if (!response.ok) {
+          throw new Error("Search failed");
+        }
+        const data = await response.json();
+        renderResults(data.results);
+      } catch (error) {
+        console.error(error);
+        resultsContainer.innerHTML = "<p>Error performing search.</p>";
+      }
+    }
+
+    function renderResults(results) {
+      if (!results.length) {
+        resultsContainer.innerHTML = "<p>No results found.</p>";
+        return;
+      }
+
+      resultsContainer.innerHTML = "";
+      results.forEach((result) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const img = document.createElement("img");
+        img.src = result.frame_url;
+        img.alt = `Frame ${result.frame_id}`;
+        img.addEventListener("click", () => openModal(result));
+        card.appendChild(img);
+
+        const info = document.createElement("div");
+        info.className = "meta";
+        info.innerHTML = `
+          <div><strong>Frame ID:</strong> ${result.frame_id}</div>
+          <div><strong>Similarity:</strong> <span class="badge">${result.similarity.toFixed(3)}</span></div>
+          ${result.timestamp !== null ? `<div><strong>Timestamp:</strong> ${result.timestamp}s</div>` : ""}
+        `;
+        card.appendChild(info);
+
+        resultsContainer.appendChild(card);
+      });
+    }
+
+    function openModal(result) {
+      modalImage.src = result.frame_url;
+      modalMeta.innerHTML = `
+        <p><strong>Frame ID:</strong> ${result.frame_id}</p>
+        <p><strong>Similarity:</strong> ${result.similarity.toFixed(3)}</p>
+        ${result.timestamp !== null ? `<p><strong>Timestamp:</strong> ${result.timestamp}s</p>` : ""}
+        <p><strong>Path:</strong> ${result.frame_path}</p>
+      `;
+      modal.style.display = "flex";
+    }
+
+    modalClose.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    window.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+
+    searchBtn.addEventListener("click", search);
+    queryInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        search();
+      }
+    });
+  </script>
+</body>
+</html>
+
