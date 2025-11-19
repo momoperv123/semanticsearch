@@ -40,7 +40,7 @@ python scripts/run_server.py
 | Endpoint | Description | Notes |
 | --- | --- | --- |
 | `GET /` | Serves `frontend/index.html` | Simple search UI hitting `/search` |
-| `GET /search?q=...&k=...` | Text → CLIP → HNSW results | Returns `{query, results[]}` with `frame_id`, `similarity`, `frame_url`, metadata |
+| `GET /search?q=...&k=...` | Text -> CLIP -> HNSW results | Returns `{query, results[]}` with `frame_id`, `similarity`, `frame_url`, metadata |
 | `GET /frame/{frame_id}` | Streams JPEG frame from disk | Used by UI hover/preview |
 | `GET /health` | Frame count, embedding dim, HNSW nodes | Health/readiness |
 
@@ -56,33 +56,6 @@ All similarities are cosine scores in `[0, 1]` (higher is better). Validation er
 4. **Retrieve** (`src/search/retriever.py`): loads metadata, embedding store, HNSW index, and CLIP text encoder to answer queries.
 5. **Serve** (`src/api/server.py` + `frontend/index.html`): FastAPI exposes HTTP endpoints and static UI.
 6. **Benchmark** (`scripts/benchmark.py`): compares HNSW vs brute-force recall/latency and optionally measures rebuild time.
-
----
-
-## Project Layout
-
-```
-semantic_media_search/
-  frontend/                # HTML/JS UI
-  scripts/
-    ingest_all.py          # image + video ingestion
-    build_index.py         # embeddings + HNSW
-    run_server.py          # uvicorn entry point
-    benchmark.py           # recall/latency benchmarks
-  src/
-    api/server.py          # FastAPI app
-    embeddings/            # CLIP encoder + memmap store
-    ingest/                # metadata writer, image/video ingest
-    index/hnsw.py          # custom HNSW graph
-    search/retriever.py    # glue layer (text -> ANN -> metadata)
-    utils/                 # logging, IO, timing helpers
-  data/
-    raw/{images,videos}/   # user-provided inputs
-    processed/             # frames, metadata.jsonl, embeddings.dat, hnsw_index.bin
-  docs/plan.md             # full specification + roadmap
-  README.md
-  requirements.txt
-```
 
 ---
 
@@ -104,11 +77,7 @@ Absolute timings scale with dataset size, but the script provides a repeatable h
 ## Testing
 
 - Brute-force search module doubles as a ground-truth implementation for recall checks.
-- Add lightweight integration tests under `tests/` (e.g., ingest → embed → search pipeline, HNSW recall vs brute-force on synthetic data).
+- Add lightweight integration tests under `tests/` (e.g., ingest -> embed -> search pipeline, HNSW recall vs brute-force on synthetic data).
 - For exhaustive coverage, refer to the roadmap in [`docs/plan.md`](docs/plan.md) (Phase 5+ testing strategy).
 
 ---
-
-## Further Reading
-
-- [`docs/plan.md`](docs/plan.md): original end-to-end plan, phased implementation notes, and future enhancements (video playback, rerankers, incremental indexing, etc.).
